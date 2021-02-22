@@ -1,0 +1,737 @@
+\newif\ifincludecopyrightedmaterial
+\newif\ifwideformat
+%--------------------------------------------------------------------------%
+\includecopyrightedmaterialtrue
+\wideformattrue
+%--------------------------------------------------------------------------%
+\ifwideformat
+\documentclass[aspectratio=196]{slides}
+\else
+\documentclass{slides}
+\fi
+%--------------------------------------------------------------------------%
+\usepackage{times,mathptm,graphicx,color,xcolor,hyperref,amsfonts}
+\usepackage{amsmath}
+\usepackage{enumitem,multirow,amsopn,proof,ulem}
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
+\usepackage{wasysym}
+\ifwideformat
+\usepackage[noheadfoot,paperheight=210mm,paperwidth=373mm,hmargin=1cm,bottom=5pt,top=5pt]{geometry}
+\else
+\usepackage[noheadfoot,a4paper,landscape,hmargin=1cm,bottom=5pt,top=5pt]{geometry}
+\fi
+\usepackage[utf8]{inputenc}
+\usepackage{multicol}
+\usepackage{tikz}
+%\usepackage{showframe}
+\texorpdfstring{}{}
+%--------------------------------------------------------------------------%
+\setitemize{itemsep=0pt,topsep=-1ex}
+\def\labelitemi{%
+  \textcolor{darkgray}{\raisebox{.3ex}{\rule{.8ex}{.8ex}}}\hspace{.5ex}}
+\def\labelitemii{%
+  \textcolor{gray}{\raisebox{.35ex}{\rule{.7ex}{.7ex}}}\hspace{.5ex}}
+\def\labelitemiii{%
+  \textcolor{lightgray}{\raisebox{.35ex}{\rule{.7ex}{.7ex}}}\hspace{.5ex}}
+\definecolor{lightlightgray}{rgb}{0.90, 0.90, 0.90}
+\def\labelitemiv{%
+  \textcolor{lightlightgray}{\raisebox{.35ex}{\rule{.7ex}{.7ex}}}\hspace{.5ex}}
+%--------------------------------------------------------------------------%
+\def\URL#1{{\tiny\href{#1}{#1}}}
+\def\EMPHBOX#1{\colorbox{yellow}{#1}}
+%--------------------------------------------------------------------------%
+\def\TITLE#1{\hbox to \linewidth{\large #1\hfill}}
+\def\BOTTOM{\vfill\newpage}
+\def\SLIDE#1{\BOTTOM\TITLE{#1}}
+%--------------------------------------------------------------------------%
+\definecolor{darkgreen}{rgb}{0,.5,0}
+\definecolor{darkred}{rgb}{0.5,0,0}
+\definecolor{darkblue}{rgb}{0,0,0.5}
+\def\blue{\color{darkblue}}
+\def\magenta{\color{darkred}}
+
+\newenvironment{centermath}
+ {\begin{center}$\displaystyle}
+ {$\end{center}}
+\newcommand{\Break}{\State \textbf{break} }
+\newcommand{\Continue}{\State \textbf{continue} }
+\newcommand{\ContinueNoState}{\textbf{continue} }
+\newcommand{\Assert}{\State \textbf{assert} }
+\newcommand{\ComputeBloom}{\ensuremath{\mathsf{ComputeBloom}}}
+\newcommand{\Barbet}{\ensuremath{\mathsf{Barbet}}}
+\newcommand{\xorclauses}{\ensuremath{\mathsf{xorclauses}}}
+
+\newcommand{\quickcheck}{\ensuremath{\mathsf{quickcheck}}}
+\newcommand{\foundcomb}{\ensuremath{\mathsf{foundcomb}}}
+\newcommand{\basecl}{\ensuremath{\mathsf{base\_cl}}}
+\newcommand{\comb}{\ensuremath{\mathsf{comb}}}
+\newcommand{\checkonecl}{\ensuremath{\mathsf{CheckClause}}}
+\newcommand{\baseabst}{\ensuremath{\mathsf{base\_abst}}}
+\newcommand{\addclause}{\ensuremath{\mathsf{AddClause}}}
+\newcommand{\xorfound}{\ensuremath{\mathsf{XORFound}}}
+\newcommand{\abst}{\ensuremath{\mathsf{abst}}} %TODO %KSM: Change abst to bloom
+\newcommand{\findonexor}{\ensuremath{\mathsf{FindOneXOR}}}
+\newcommand{\Vars}{\ensuremath{\mathsf{Vars }}}
+\newcommand{\PAC}{\ensuremath{\mathsf{PAC}}}
+\newcommand{\BRD}{\ensuremath{\mathsf{BIRD}}}
+\newcommand{\shrug}[1][]{%
+\begin{tikzpicture}[baseline,x=0.8\ht\strutbox,y=0.8\ht\strutbox,line width=0.125ex,#1]
+\def\arm{(-2.5,0.95) to (-2,0.95) (-1.9,1) to (-1.5,0) (-1.35,0) to (-0.8,0)};
+\draw \arm;
+\draw[xscale=-1] \arm;
+\def\headpart{(0.6,0) arc[start angle=-40, end angle=40,x radius=0.6,y radius=0.8]};
+\draw \headpart;
+\draw[xscale=-1] \headpart;
+\def\eye{(-0.075,0.15) .. controls (0.02,0) .. (0.075,-0.15)};
+\draw[shift={(-0.3,0.8)}] \eye;
+\draw[shift={(0,0.85)}] \eye;
+% draw mouth
+\draw (-0.1,0.2) to [out=15,in=-100] (0.4,0.95);
+\end{tikzpicture}}
+%--------------------------------------------------------------------------%
+\def\CITE#1{[#1]}
+\def\TCITE#1{\vspace{-1.5ex}\CITE{#1}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{document}
+\begin{center}
+{\huge Solving CNF-XOR Formulas: A Practical Perspective} \\[1cm]
+{\Large Mate Soos}\\[1cm]
+
+%\includegraphics[width=8cm]{pdfs/jku}
+%\\[1cm]
+{\large Simons Institute SAT Program Seminar}
+\\[2ex]
+%{\large  IIT Bombay, India} \\[4ex]
+22nd of February, 2021 \\[16ex]
+
+%{\large  Based on slides by \textbf{Armin Biere}\\}
+\end{center}
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\SLIDE{About Me}
+\begin{itemize}
+\item PhD at INRIA Grenoble 2009
+\item Maintainer of CryptoMiniSat, ApproxMC, UniGen, STP
+\item Working as a Senior Research Fellow at National University of Singapore (3mo a year)
+\item Working as a Senior IT Security Architect at Zalando (9mo a year)
+\item Interests: Higher level abstractions, Counting, Inprocessing, ML, Visualisation
+\end{itemize}
+\vfill
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\SLIDE{Motivating Problem: Approximate Counting}
+
+\begin{itemize}
+\item ApproxMC by Chakraborty, Meel, and Vardi (2003): A Scalable Approximate Model Counter
+\item Random XORs over the projection set: a hashing-based strategy to probably approximately count solutions
+\item 99\% of its time is spent in the SAT solver solving CNF-XOR formulas
+\end{itemize}
+
+(1) Pick a random cell, (2) count solutions, (3) multiply by no. cells
+\begin{center}
+\includegraphics[width=24cm]{cuts_on_plane.png}
+\end{center}
+
+\vfill
+\newpage
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\SLIDE{CNF-XOR}
+
+CNF with XORs occur in a number of problem domains:
+\begin{itemize}
+\item Cryptography
+\item Polynomial systems over GF(2)
+\item Adder and multiplier circuits
+\item Hashed-based counting and sampling
+\end{itemize}
+
+In this talk, we'll use approximate counting as our reference problem
+
+\vfill
+\newpage
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\SLIDE{XORs in CNF}
+
+Translating $a\oplus b\oplus c=0$ into CNF using Tseitin transformation [Tseitin'66]:
+
+$\begin{array}{lllll}
+a& \vee &b& \vee &c\\
+a& \vee &\neg b& \vee &\neg c\\
+\neg a& \vee &\neg b& \vee &c\\
+\neg a& \vee &b& \vee &\neg c\\
+\end{array}$
+
+An XOR for size N needs $2^{n-1}$ clauses to translate without helper variables.
+
+To translate an XOR $a\oplus b\oplus c\oplus d\oplus e\oplus f=0$, we cut it into two XORs, using a helper variable {\color{red}x}:
+
+$\begin{array}{lllllll}
+a& \oplus &b& \oplus &c & \oplus &{\color{red}x}\\
+{\color{red}x}& \oplus &d& \oplus &e & \oplus &f\\
+\end{array}$
+
+Using as many helper variables as needed cuts down the blowup to linear size. It increases the number of variables, but that's not really an issue. Modern SAT solvers can deal with millions of variables. However....
+
+\vfill
+\newpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\SLIDE{Resolution on XOR formulas}
+
+\begin{itemize}
+\item Resolution is bad at proving UNSAT of XORs blasted into CNF
+\item Actually, the minimum size resolution proof can be made to be exponential in the number of variables
+\item But naive Gauss-Jordan Elimination is only O($n^3$)
+\item We need to combine GJE with CDCL or we won't have a hope of solving some of these formulas
+\end{itemize}
+
+N.B.: We don't always need GJE just because there are XORs. E.g. if there is an UNSAT core that doesn't contain a single clause from the XORs, it can be OK (though there may be a smaller UNSAT proof with the XORs)
+
+
+\vfill
+\newpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\SLIDE{XOR manipulation once in CNF format}
+
+\begin{itemize}
+\item XORs can be recovered syntactically and semantically
+\item Syntactic recovery seems easy but:
+
+$\begin{array}{lllll}
+a& \vee &b& \vee\\
+a& \vee &\neg b& \vee &\neg c\\
+\neg a& \vee &\neg b& \vee &c\\
+\neg a& \vee &b& \vee &\neg c\\
+\end{array}$
+$\rightarrow$ still implies the XOR, so complication arise
+\item Once recovered, XORs can be re-assembled:
+
+$\begin{array}{lllllll}
+a& \oplus &b& \oplus &c & \oplus &{\color{red}x}\\
+{\color{red}x}& \oplus &d& \oplus &e & \oplus &f\\
+\end{array}$
+
+becomes
+
+$a\oplus b\oplus c\oplus d\oplus e\oplus f=0$
+
+
+
+\item Running GJE on the reassembled XORs is easy, but does not suffice -- it will only perform GJE at ``toplevel'', i.e. without any assignements by the solver.
+\end{itemize}
+
+
+\vfill
+\newpage
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\SLIDE{CDCL(T)}
+
+For theories that are not efficiently simulated by CDCL
+
+\begin{itemize}
+\item T is the theory, e.g.:
+\begin{itemize}
+\item Gauss-Jordan Elimination [SoosNohlCastelluccia'2010]
+\item Pseudo-Boolean Reasoning [ChaiKuehlmann'2006]
+% Also: Benhamou  and  L.  Granvilliers,  “Continuous  and  Interval  Constraints,”inHandbook  of  Constraint  Programming,  ser.  Foundations  of  ArtificialIntelligence, 2006, pp. 571–603
+\item Symmetric Explanation Learning [DevriendtBogaertsBruynooghe'2017]
+\end{itemize}
+\item Theory is run side-by-side to the CDCL algorithm
+\item \textbf{Propagate} values implied by Theory given current assignment stack of CDCL
+\item \textbf{Conflict} if Theory implies 1=0 given current assignment stack of CDCL
+\item Theory must give reason for propagations\&conflicts
+\end{itemize}
+
+\begin{center}
+\includegraphics[width=24cm]{CDCL-T}
+\end{center}
+
+\vfill
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\SLIDE{CDCL(T) Cont.}
+
+Optimizations:
+\begin{itemize}
+\item Should only send delta of assignment stack + conflict clauses
+\begin{itemize}
+\item Variables assigned (decisions + propagations)
+\item Variables unassigned (backtracking, restarting)
+\item New conflict clauses
+\end{itemize}
+\item Theory only needs to compute delta relative to old state
+\item Theory can give placeholders for reasons
+\begin{itemize}
+\item If reason is needed during conflict generation, Theory is queried
+\item Called ``lazy'' (vs ``greedy'') interpolant generation
+\end{itemize}
+\end{itemize}
+\vspace{2ex}
+\begin{center}
+\includegraphics[width=29cm]{CDCL-T-delta}
+\end{center}
+
+\vfill
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\SLIDE{CDCL(T) Gauss-Jordan Elimination: Ingredients}
+
+What components do we need?
+\begin{itemize}
+\item \textbf{Extractor for XOR constraints}: XORs may be encoded as CNF
+\item \textbf{Disjoint matrix detection}: disjoint matrices should be handled separately
+\item \textbf{Delta update mechanism} for row-echelon form matrix:
+\begin{itemize}
+    \item how to handle when variable is set
+    \item how to handle when variable is unset
+\end{itemize}
+\item \textbf{Efficient data structures} to allow for quick updates
+\item \textbf{Reason generation}
+\end{itemize}
+\vfill
+\newpage
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\SLIDE{CDCL(T) Gauss-Jordan Elimination: Extraction}
+
+\[
+\begin{array}{rcl}
+l_1 \oplus l_2 \oplus l_3 = 1
+& \Leftrightarrow &
+             l_1 \vee           l_2 \vee l_3          \wedge\\
+& &\overline l_1 \vee \overline l_2 \vee l_3          \wedge\\
+& &\overline l_1 \vee           l_2 \vee \overline l_3\wedge\\
+& &          l_1 \vee \overline l_2 \vee \overline l_3\wedge\\
+\\[0.5cm]
+%
+l_1 \oplus l_2 \oplus l_3 = 1
+& \leftarrow &
+             l_1 \vee           l_2 \vee \wedge\\
+& &\overline l_1 \vee \overline l_2 \vee l_3          \wedge\\
+& &\overline l_1 \vee           l_2 \vee \overline l_3\wedge\\
+& &          l_1 \vee \overline l_2 \vee \overline l_3\wedge\\
+\\[0.5cm]
+%
+\end{array}
+\]
+
+\begin{itemize}
+\item Missing literals only mean something stronger than XOR
+\item XOR is still implied and should be detected
+\end{itemize}
+
+\vfill
+\newpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\SLIDE{CDCL(T) Gauss-Jordan Elimination: Extraction}
+\vspace{2ex}
+\begin{algorithm}[H]
+	\caption{{\ComputeBloom}}\label{alg:bloom}
+	\begin{algorithmic}[1]
+		\State {\abst} $\gets$ 0
+		\For{var in clause}
+		\State {\abst} $\gets$ {\abst} $\mid$ (1 $<<$ (var $\%$ 32))
+		\EndFor
+		\State \Return {\abst}
+	\end{algorithmic}
+\end{algorithm}
+\vspace{2ex}
+
+\begin{algorithm}
+	\caption{{\Barbet}(clauses, $M$)}\label{alg:barbet}
+	\begin{algorithmic}[1]
+		\State $\xorclauses \gets \emptyset$
+		\For{{\basecl} $\in$ clauses}
+		\If{{\basecl}.size $> M$}
+		\ContinueNoState
+		\EndIf
+
+		\If{{\basecl}.used == 1}
+		\ContinueNoState
+		\EndIf
+
+		\State \Call{find\_one\_xor}{{\basecl}}
+		\EndFor
+		\Return $\xorclauses$
+	\end{algorithmic}
+\end{algorithm}
+
+\vfill
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\SLIDE{CDCL(T) Gauss-Jordan Elimination: Extraction}
+\vspace{2ex}
+% \begin{algorithm}
+% \small
+% \caption{Find XOR using base clause}\label{alg:findonexor}
+\begin{algorithmic}[1]
+\Function{\findonexor}{{\basecl}}
+	\State {\quickcheck} $\gets $ array of zeroes
+	\State found\_comb $\gets$ array of zeroes
+
+%    \State found\_comb $\gets$ clear
+%    \State found\_comb.resize($2^{\textit{{\basecl}.size}}$, 0)
+    \State comb $\gets 0$
+    \State base\_rhs $\gets 1$ \Comment{right-hand-side of the XOR}
+    \For{i $\gets 0 \ldots$ {\basecl} size-1} \label{line:findonexor-base-begin}
+        \State base\_rhs $\gets$ base\_rhs $\oplus$ {\basecl}[i].sign
+        \State comb $\gets$ comb $|$ ({\basecl}[i].sign $<<$ i)
+        \State {\quickcheck}[{\basecl}[i].var] $\gets$ 1
+    \EndFor \label{line:findonexor-base-end}
+    \State {\baseabst} $\gets$ \Call{calc\_abst}{{\basecl}} \label{line:findonexor-compute-bloom}
+    \State found\_comb[comb] $\gets$ 1
+
+   % \State vars $\gets$ 2 lowest occurence variables in {\basecl}
+    \For{v $\in$ \Vars({\basecl})}
+        \For{abst, cl $\in$ occurrence[v]}
+            \If{\Call{{\checkonecl}}{abst, cl, {\basecl}, {\baseabst}}}
+            \Return
+            \EndIf
+        \EndFor
+%        \For{abst, cl $\in$ occurrence[-v]}
+%            \If{\Call{{\checkonecl}}{abst, cl}}
+%                \State \Return
+%            \EndIf
+%        \EndFor
+    \EndFor
+\EndFunction
+\end{algorithmic}
+% \end{algorithm}
+\vfill
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\SLIDE{CDCL(T) Gauss-Jordan Elimination: Matrix Separation}
+\vspace{2ex}
+
+\begin{minipage}{0.7\textwidth}
+% \begin{algorithm}
+% \caption{Find matrixes}
+\begin{algorithmic}[1]
+\Function{findMatrixes}{xors}
+    \State matrixnum $\gets$ 0, var-to-matrix $\gets$ -1, matrix-to-vars $\gets$ empty
+    \For{xor $\in$ xors}
+        \State xor-belongs $\gets$ -1
+        \For{var $\in$ xor}
+            \If{var-to-matrix[var] != -1}
+                \If{xor-belongs == -1} {xor-belongs = var-to-matrix[var]}
+                \ElsIf{xor-belongs != var-to-matrix[var]}
+                    \State Move all variables from var-to-matrix[var] to xor-belongs
+                \EndIf
+            \EndIf
+        \EndFor
+        \If{xor-belongs == -1}
+            \State xor-belongs $\gets$ matrixnum++
+        \EndIf
+        \For{var $\in$ xor}
+            \State var-to-matrix[var] = xor-belongs
+        \EndFor
+    \EndFor \label{line:findonexor-base-end}
+\EndFunction
+\end{algorithmic}
+% \end{algorithm}
+\end{minipage}
+\begin{minipage}{0.3\textwidth}
+\includegraphics[angle=270,width=7cm]{matrix-components}
+\end{minipage}
+\vfill
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\SLIDE{CDCL(T) Gauss-Jordan Elimination: None of that row swapping please!}
+\vspace{2ex}
+
+Observations:
+\begin{itemize}
+\item We are using binary matrixes (1/0), so bit-packed format is best
+\item Packed format: row-swapping becomes expensive -- it's a copy
+\item Row-echelon form is nice for the eyes [HanJiang2012]:
+\begin{itemize}
+\item But we only need a row to be responsible for a column's ``1''
+\item What we loose: have to check all rows, not only ones below
+\end{itemize}
+\item So, any row can be responsible for being a column's ``1''
+\end{itemize}
+
+\begin{center}
+\begin{minipage}{0.2\linewidth}
+\[
+\begin{bmatrix}
+0 & 0 & 0 & 1 & 1 & 1 & 0 & \color{red}1 & 1\\
+1 & \color{red}1 & 0 & 1 & 0 & 1 & 0 & 0 & 1\\
+1 &0 &0 & 0 & 0 & 0 & \color{red}1 & 0 & 0\\
+1 &0 &\color{red}1 & 1 & 0 & 1 & 0 & 0 & 0\\
+\end{bmatrix}
+\]
+\end{minipage}
+\end{center}
+
+\vfill
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\SLIDE{CDCL(T) Gauss-Jordan Elimination: 2-variable watchlist scheme}
+\vspace{2ex}
+
+Let's use a 2-variable watch scheme [HanJiang2012]:
+\begin{itemize}
+\item If 2 or more variables are unset in XOR constraint, it cannot propagate or conflict
+\item If 1 variable is unset, it must propagate
+\item If 0 variable is unset, it is either satisfied or is in conflict
+\end{itemize}
+
+We'll use the Simplex Method's terminology [Danzig'82]:
+\begin{itemize}
+\item Let's call the column that the row is responsible for ``basic''
+\item Let's call the column that the row is NOT responsible for ``nonbasic''
+\end{itemize}
+
+What data structures do we need for this? Let's see:
+\begin{itemize}
+\item Watchlist for variables (not literals!)
+\item column-has-responsible-row[column] = 1/0
+\item row-to-nonbasic-column[row] = column
+\end{itemize}
+\vfill
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\SLIDE{CDCL(T) Gauss-Jordan Elimination: Propagation}
+\vspace{2ex}
+
+A rough outline:
+\begin{itemize}
+\item Observe that the matrix is usually underdetermined: more columns than rows
+\item Many unset columns will have no responsible rows
+\item If we set a variable, its column doesn't need a responsible row
+\item The more variables we decide on, the more the matrix will be determined
+\end{itemize}
+
+\begin{minipage}{0.3\linewidth}
+\[
+\begin{bmatrix}
+0 &            0 &           0 & 1 & 1 & 1 &            0 & \color{red}1 & 1\\
+1 & \color{red}1 &           0 & 1 & 0 & 1 &            0 &            0 & 1\\
+1 &            0 &           0 & 0 & 0 & 0 & \color{red}1 &            0 & 0\\
+1 &            0 &\color{red}1 & 1 & 0 & 1 &            0 &            0 & 0\\
+\end{bmatrix}
+\]
+\end{minipage}
+%
+\begin{minipage}{0.3\linewidth}
+\centering
+Let's set the first column to ``1'' $\rightarrow$
+\end{minipage}
+%
+\begin{minipage}{0.3\linewidth}
+\[
+\begin{bmatrix}
+\color{darkgreen}0 &            0 &           0 & 1 & 1 & 1 &            0 & \color{red}1 & 1\\
+\color{darkgreen}0 & \color{red}1 &           0 & 1 & 0 & 1 &            0 &            0 & 0\\
+\color{darkgreen}0 &            0 &           0 & 0 & 0 & 0 & \color{red}1 &            0 & 1\\
+\color{darkgreen}0 &            0 &\color{red}1 & 1 & 0 & 1 &            0 &            0 & 1\\
+\end{bmatrix}
+\]
+\end{minipage}
+
+\begin{minipage}{0.3\linewidth}
+\centering
+we get a propagation!
+$\rightarrow$
+\end{minipage}
+\begin{minipage}{0.3\linewidth}
+\[
+\begin{bmatrix}
+\color{darkgreen}0 &            0 &           0 & 1 & 1 & 1 &            0 & 1 & 1\\
+\color{darkgreen}0 & 1 &           0 & 1 & 0 & 1 &            0 &            0 & 0\\
+\color{darkgreen}0 &            0 &           0 & 0 & 0 & 0 & \color{red}1 &            0 & 1\\
+\color{darkgreen}0 &            0 &1 & 1 & 0 & 1 &            0 &            0 & 1\\
+\end{bmatrix}
+\]
+\end{minipage}
+\begin{minipage}{0.3\linewidth}
+Notice: we were were watching both of this row's variables where it has a ``1''. It's a 2-variable watch scheme!
+\end{minipage}
+
+
+\vfill
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\SLIDE{CDCL(T) Gauss-Jordan Elimination: Propagation}
+\vspace{2ex}
+
+\begin{minipage}{0.2\linewidth}
+\centering
+We got a propagation from last slide:
+\end{minipage}
+\begin{minipage}{0.3\linewidth}
+\[
+\begin{bmatrix}
+\color{darkgreen}0 &            0 &           0 & 1 & 1 & 1 &            0 & 1 & 1\\
+\color{darkgreen}0 & 1 &           0 & 1 & 0 & 1 &            0 &            0 & 0\\
+\color{darkgreen}0 &            0 &           0 & 0 & 0 & 0 & \color{red}1 &            0 & 1\\
+\color{darkgreen}0 &            0 &1 & 1 & 0 & 1 &            0 &            0 & 1\\
+\end{bmatrix}
+\]
+\end{minipage}
+%
+\begin{minipage}{0.2\linewidth}
+\centering
+Variable is now set by Gauss-Jordan $\rightarrow$
+\end{minipage}
+%
+\begin{minipage}{0.3\linewidth}
+\[
+\begin{bmatrix}
+\color{darkgreen}0 &            0 &           0 & 1 & 1 & 1 & \color{darkgreen}0 & \color{red}1 & 1\\
+\color{darkgreen}0 & \color{red}1 &           0 & 1 & 0 & 1 & \color{darkgreen}0 & 0 & 0\\
+\color{darkgreen}0 &            0 &           0 & 0 & 0 & 0 & \color{darkgreen}0 & 0 & 0\\
+\color{darkgreen}0 &            0 &\color{red}1 & 1 & 0 & 1 & \color{darkgreen}0 & 0 & 1\\
+\end{bmatrix}
+\]
+\end{minipage}
+
+\begin{minipage}{0.2\linewidth}
+\centering
+Variable is decided on $\rightarrow$
+\end{minipage}
+\begin{minipage}{0.3\linewidth}
+\[
+\begin{bmatrix}
+\color{darkgreen}0 & \color{darkgreen}0 &           0 & 1 & 1 & 1 & \color{darkgreen}0 & \color{red}1 & 1\\
+\color{darkgreen}0 & \color{darkgreen}0 &           0 & 1 & 0 & 1 & \color{darkgreen}0 & 0 & 0\\
+\color{darkgreen}0 & \color{darkgreen}0 &           0 & 0 & 0 & 0 & \color{darkgreen}0 & 0 & 0\\
+\color{darkgreen}0 & \color{darkgreen}0 &\color{red}1 & 1 & 0 & 1 & \color{darkgreen}0 & 0 & 1\\
+\end{bmatrix}
+\]
+\end{minipage}
+%
+\begin{minipage}{0.2\linewidth}
+\centering
+Need new responsible variable
+
+$\rightarrow$
+\end{minipage}
+%
+\begin{minipage}{0.3\linewidth}
+\[
+\begin{bmatrix}
+\color{darkgreen}0 & \color{darkgreen}0 &           0 & 1 & 1 & 1 & \color{darkgreen}0 & \color{red}1 & 1\\
+\color{darkgreen}0 & \color{darkgreen}0 &           0 & \color{red}1 & 0 & 1 & \color{darkgreen}0 & 0 & 0\\
+\color{darkgreen}0 & \color{darkgreen}0 &           0 & 0 & 0 & 0 & \color{darkgreen}0 & 0 & 0\\
+\color{darkgreen}0 & \color{darkgreen}0 &\color{red}1 & 1 & 0 & 1 & \color{darkgreen}0 & 0 & 1\\
+\end{bmatrix}
+\]
+\end{minipage}
+
+\begin{minipage}{0.2\linewidth}
+\centering
+Must adjust matrix
+
+$\rightarrow$
+\end{minipage}
+\begin{minipage}{0.3\linewidth}
+\[
+\begin{bmatrix}
+\color{darkgreen}0 & \color{darkgreen}0 &           0 &            0 & 1 & 0 & \color{darkgreen}0 & \color{red}1 & 1\\
+\color{darkgreen}0 & \color{darkgreen}0 &           0 & \color{red}1 & 0 & 1 & \color{darkgreen}0 &            0 & 0\\
+\color{darkgreen}0 & \color{darkgreen}0 &           0 &            0 & 0 & 0 & \color{darkgreen}0 &            0 & 0\\
+\color{darkgreen}0 & \color{darkgreen}0 &\color{red}1 &            0 & 0 & 0 & \color{darkgreen}0 &            0 & 1\\
+\end{bmatrix}
+\]
+\end{minipage}
+\begin{minipage}{0.2\linewidth}
+\centering
+New propagation
+
+$\rightarrow$
+\end{minipage}
+\begin{minipage}{0.3\linewidth}
+\[
+\begin{bmatrix}
+\color{darkgreen}0 & \color{darkgreen}0 &\color{darkgreen}0 &            0 & 1 & 0 & \color{darkgreen}0 & \color{red}1 & 1\\
+\color{darkgreen}0 & \color{darkgreen}0 &\color{darkgreen}0 & \color{red}1 & 0 & 1 & \color{darkgreen}0 &            0 & 0\\
+\color{darkgreen}0 & \color{darkgreen}0 &\color{darkgreen}0 &            0 & 0 & 0 & \color{darkgreen}0 &            0 & 0\\
+\color{darkgreen}0 & \color{darkgreen}0 &\color{darkgreen}0 &            0 & 0 & 0 & \color{darkgreen}0 &            0 & 0\\
+\end{bmatrix}
+\]
+\end{minipage}
+
+And the story goes on...
+
+\vfill
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\SLIDE{CDCL(T) Gauss-Jordan Elimination: Reason Clauses}
+\vspace{2ex}
+
+What combination of XOR constraints gave us the propagation?
+\begin{itemize}
+\item The above set of matrixes cannot give us the reason clause
+\item Easy solution: the ``green'' columns are actually not zeroed out
+\item When looking for propagations/conflicts, we check if columns' variable is set. If yes, we pretend it's a 0
+\item When looking for reasons, we use the actual values
+\item All the row-XOR operations happen as before
+\end{itemize}
+
+Hence:
+\begin{itemize}
+\item Each row is a combination of input XOR constraints
+\item It is guaranteed to propagate/conflict under current variable assignment
+\end{itemize}
+
+When a variable is set, we are just wearing ``green glasses''
+
+\vfill
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\SLIDE{CDCL(T) Gauss-Jordan Elimination: Backtracking}
+\vspace{2ex}
+
+
+If we don't zero out the columns, we get a free bonus! If we need to unset an assignment due to backtracking, we pretend we never set it (remove ``green glasses''):
+\begin{itemize}
+\item All previous invariants still hold
+\item If the column had a responsible row, it still has it
+\item Both watches of the row are still good and in the watchlists
+\item Matrix looks differently than when we last had this assignment... is that a problem?
+\item No! Observe: new matrix could have been reached from the starting position, pivoting differently(!)
+\end{itemize}
+\vfill
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\SLIDE{CDCL(T) Gauss-Jordan Elimination: Recap}
+\vspace{2ex}
+
+Let's recap! What was hard:
+\begin{itemize}
+\item Extracting XOR constraints
+\item Keeping CDCL and GJ in sync:
+\begin{itemize}
+\item Fast update for variable setting (propagation)
+\item Fast update for backtracking (conflict)
+\end{itemize}
+\item Fast checking for propagation/conflict
+\item Lazy reason clause generation
+\end{itemize}
+
+\vfill
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\SLIDE{Thank you!}
+\vspace{2ex}
+
+\begin{center}
+\includegraphics[scale=1.4]{appmc-mate-presentation}
+\end{center}
+
+\vfill
+\newpage
+\end{document}
+
