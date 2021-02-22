@@ -38,9 +38,6 @@
 \def\labelitemiv{%
   \textcolor{lightlightgray}{\raisebox{.35ex}{\rule{.7ex}{.7ex}}}\hspace{.5ex}}
 %--------------------------------------------------------------------------%
-\def\URL#1{{\tiny\href{#1}{#1}}}
-\def\EMPHBOX#1{\colorbox{yellow}{#1}}
-%--------------------------------------------------------------------------%
 \def\TITLE#1{\hbox to \linewidth{\large #1\hfill}}
 \def\BOTTOM{\vfill\newpage}
 \def\SLIDE#1{\BOTTOM\TITLE{#1}}
@@ -51,47 +48,6 @@
 \def\blue{\color{darkblue}}
 \def\magenta{\color{darkred}}
 
-\newenvironment{centermath}
- {\begin{center}$\displaystyle}
- {$\end{center}}
-\newcommand{\Break}{\State \textbf{break} }
-\newcommand{\Continue}{\State \textbf{continue} }
-\newcommand{\ContinueNoState}{\textbf{continue} }
-\newcommand{\Assert}{\State \textbf{assert} }
-\newcommand{\ComputeBloom}{\ensuremath{\mathsf{ComputeBloom}}}
-\newcommand{\Barbet}{\ensuremath{\mathsf{Barbet}}}
-\newcommand{\xorclauses}{\ensuremath{\mathsf{xorclauses}}}
-
-\newcommand{\quickcheck}{\ensuremath{\mathsf{quickcheck}}}
-\newcommand{\foundcomb}{\ensuremath{\mathsf{foundcomb}}}
-\newcommand{\basecl}{\ensuremath{\mathsf{base\_cl}}}
-\newcommand{\comb}{\ensuremath{\mathsf{comb}}}
-\newcommand{\checkonecl}{\ensuremath{\mathsf{CheckClause}}}
-\newcommand{\baseabst}{\ensuremath{\mathsf{base\_abst}}}
-\newcommand{\addclause}{\ensuremath{\mathsf{AddClause}}}
-\newcommand{\xorfound}{\ensuremath{\mathsf{XORFound}}}
-\newcommand{\abst}{\ensuremath{\mathsf{abst}}} %TODO %KSM: Change abst to bloom
-\newcommand{\findonexor}{\ensuremath{\mathsf{FindOneXOR}}}
-\newcommand{\Vars}{\ensuremath{\mathsf{Vars }}}
-\newcommand{\PAC}{\ensuremath{\mathsf{PAC}}}
-\newcommand{\BRD}{\ensuremath{\mathsf{BIRD}}}
-\newcommand{\shrug}[1][]{%
-\begin{tikzpicture}[baseline,x=0.8\ht\strutbox,y=0.8\ht\strutbox,line width=0.125ex,#1]
-\def\arm{(-2.5,0.95) to (-2,0.95) (-1.9,1) to (-1.5,0) (-1.35,0) to (-0.8,0)};
-\draw \arm;
-\draw[xscale=-1] \arm;
-\def\headpart{(0.6,0) arc[start angle=-40, end angle=40,x radius=0.6,y radius=0.8]};
-\draw \headpart;
-\draw[xscale=-1] \headpart;
-\def\eye{(-0.075,0.15) .. controls (0.02,0) .. (0.075,-0.15)};
-\draw[shift={(-0.3,0.8)}] \eye;
-\draw[shift={(0,0.85)}] \eye;
-% draw mouth
-\draw (-0.1,0.2) to [out=15,in=-100] (0.4,0.95);
-\end{tikzpicture}}
-%--------------------------------------------------------------------------%
-\def\CITE#1{[#1]}
-\def\TCITE#1{\vspace{-1.5ex}\CITE{#1}}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{document}
 \begin{center}
@@ -115,8 +71,33 @@
 \item Maintainer of CryptoMiniSat, ApproxMC, UniGen, STP
 \item Working as a Senior Research Fellow at National University of Singapore (3mo a year)
 \item Working as a Senior IT Security Architect at Zalando (9mo a year)
-\item Interests: Higher level abstractions, Counting, Inprocessing, ML, Visualisation
+\item Interests: SAT solving, Counting, Sampling, Machine Learning, Higher level abstractions
 \end{itemize}
+\vfill
+\newpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\SLIDE{CNF-XOR}
+
+CNF with XORs occur in a number of problem domains, for example:
+\begin{itemize}
+\item Cryptography. ex find the key given partially observed circuit data [MohamedBulyginZHW2012]
+\item Adder and multiplier circuits: ex. see Daniela Kaufmann's presentation ``Combining SAT and Computer Algebra for Circuit Verification'' (February 16th) [KaufmannBiereKauers2019]
+\item Polynomial systems over GF(2): ex.
+
+$\begin{array}{llllllll}
+ab &\oplus &b &\oplus &efd &\oplus &e &= 0\\
+a &\oplus &e &\oplus &fd &&&= 0\\
+abcd &\oplus &e &\oplus &f &&&= 0\\
+\end{array}$
+
+See e.g. Bosphorus [ChooSoosChaiMeel19]
+
+\item Hashed-based counting and sampling [ChakrabortyMeelVardi2003]
+\end{itemize}
+
+In this talk, we'll use approximate counting as our reference problem
+
 \vfill
 \newpage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -138,28 +119,11 @@
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\SLIDE{CNF-XOR}
-
-CNF with XORs occur in a number of problem domains:
-\begin{itemize}
-\item Cryptography
-\item Polynomial systems over GF(2)
-\item Adder and multiplier circuits
-\item Hashed-based counting and sampling
-\end{itemize}
-
-In this talk, we'll use approximate counting as our reference problem
-
-\vfill
-\newpage
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \SLIDE{XORs in CNF}
 
-Translating $a\oplus b\oplus c=0$ into CNF using Tseitin transformation [Tseitin'66]:
+Translating $a\oplus b\oplus c=1$ into CNF using Tseitin transformation [Tseitin'66]:
 
-$\begin{array}{lllll}
+$\begin{array}{rrrrr}
 a& \vee &b& \vee &c\\
 a& \vee &\neg b& \vee &\neg c\\
 \neg a& \vee &\neg b& \vee &c\\
@@ -181,30 +145,14 @@ Using as many helper variables as needed cuts down the blowup to linear size. It
 \newpage
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\SLIDE{Resolution on XOR formulas}
-
-\begin{itemize}
-\item Resolution is bad at proving UNSAT of XORs blasted into CNF
-\item Actually, the minimum size resolution proof can be made to be exponential in the number of variables
-\item But naive Gauss-Jordan Elimination is only O($n^3$)
-\item We need to combine GJE with CDCL or we won't have a hope of solving some of these formulas
-\end{itemize}
-
-N.B.: We don't always need GJE just because there are XORs. E.g. if there is an UNSAT core that doesn't contain a single clause from the XORs, it can be OK (though there may be a smaller UNSAT proof with the XORs)
-
-
-\vfill
-\newpage
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \SLIDE{XOR manipulation once in CNF format}
 
 \begin{itemize}
 \item XORs can be recovered syntactically and semantically
 \item Syntactic recovery seems easy but:
 
-$\begin{array}{lllll}
-a& \vee &b& \vee\\
+$\begin{array}{rrrrr}
+a& \vee &b& \\
 a& \vee &\neg b& \vee &\neg c\\
 \neg a& \vee &\neg b& \vee &c\\
 \neg a& \vee &b& \vee &\neg c\\
@@ -221,16 +169,232 @@ becomes
 
 $a\oplus b\oplus c\oplus d\oplus e\oplus f=0$
 
+\item XORs in different matrices can be extracted by grouping XORs together that coincide on at least one variable.
 
+$\rightarrow$ Since naive GJE is O($n^3$), if we have two matrices of n/2 size, we'll be $\approx 4$x faster working on them separately
 
-\item Running GJE on the reassembled XORs is easy, but does not suffice -- it will only perform GJE at ``toplevel'', i.e. without any assignements by the solver.
+\item Running GJE on the reassembled XORs is easy, but does not suffice -- it will only perform GJE at ``toplevel'', i.e. without any assignments by the solver.
 \end{itemize}
 
 
 \vfill
 \newpage
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\SLIDE{Resolution on XOR formulas}
 
+\begin{itemize}
+\item Standard (non-extended) resolution is bad at proving UNSAT of XORs blasted into CNF
+\item Actually, the minimum size resolution proof can be made to be exponential in the number of variables
+\item But naive Gauss-Jordan Elimination (GJE) is only O($n^3$)
+\item We need to combine GJE with CDCL or we won't have a hope of solving some of these formulas
+\end{itemize}
+
+N.B.: We don't always need GJE just because there are XORs. E.g. if there is an UNSAT core that doesn't contain a single clause from the XORs, it can be OK (though there may be a smaller UNSAT proof with the XORs)
+
+
+\vfill
+\newpage
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\SLIDE{Gaussian Elimination}
+
+Gaussian elimination [UnknownChineseAuthor(s)179, Newton1670] is an algorithm in linear algebra for solving a system of linear equations. Let's restrict ourselves to linear equations over GF(2), i.e. to:
+
+$\begin{array}{llllll}
+x_1 &&&\oplus &x_3 &= 0\\
+x_1 &\oplus &x_2 &\oplus &x_3 &= 1\\
+x_1 &\oplus &x_2 &&&= 0\\
+\end{array}$
+$\rightarrow$ In matrix notation:
+\begin{minipage}{0.3\linewidth}
+\[
+\left[
+\begin{array}{lll|l}
+x_1 & x_2 & x_3 & $RHS$\\
+1 &            0 &           1 & 0\\
+1 &            1 &           1 & 1\\
+1 &            1 &           0 & 0\\
+\end{array}
+\right]
+\]
+\end{minipage}
+
+In Gaussian Elimination, we aim to modify the matrix until the lower left-hand corner of the matrix is filled with zeros, also called the \textbf{upper triangular form}:
+
+\begin{minipage}{0.2\linewidth}
+\[
+\left[
+\begin{array}{lll|l}
+\color{red}{1} &            0 &           1 & 0\\
+1 &            1 &           1 & 1\\
+1 &            1 &           0 & 0\\
+\end{array}
+\right]
+\]
+\end{minipage}
+\begin{minipage}{0.4\linewidth}
+$\rightarrow$ XOR row of leftmost ``1'' into all rows where `1'' is present in that column
+\end{minipage}
+\begin{minipage}{0.2\linewidth}
+\[
+\left[
+\begin{array}{lll|l}
+1 &            0 &           1 & 0\\
+0 &            1 &           0 & 1\\
+0 &            1 &           1 & 0\\
+\end{array}
+\right]
+\]
+\end{minipage}
+
+\begin{minipage}{0.2\linewidth}
+\[
+\left[
+\begin{array}{lll|l}
+1 &            0 &           1 & 0\\
+0 &            \color{red}{1} &           0 & 1\\
+0 &            1 &           1 & 0\\
+\end{array}
+\right]
+\]
+\end{minipage}
+\begin{minipage}{0.4\linewidth}
+$\rightarrow$ XOR row of 2nd  leftmost ``1'' into all rows where `1'' is present in that column
+\end{minipage}
+\begin{minipage}{0.2\linewidth}
+\[
+\left[
+\begin{array}{lll|l}
+1 &            0 &           1 & 0\\
+0 &            1 &           0 & 1\\
+0 &            0 &           1 & 1\\
+\end{array}
+\right]
+\]
+\end{minipage}
+
+
+\vfill
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\SLIDE{Gaussian Elimination cont.}
+
+\begin{minipage}{0.2\linewidth}
+\[
+\left[
+\begin{array}{lll|l}
+\color{red}{1} &            0 &           1 & 0\\
+1 &            1 &           1 & 1\\
+1 &            1 &           0 & 0\\
+\end{array}
+\right]
+\]
+\end{minipage}
+\begin{minipage}{0.4\linewidth}
+$\rightarrow$ XOR row of leftmost ``1'' into all rows where `1'' is present in that column
+\end{minipage}
+\begin{minipage}{0.2\linewidth}
+\[
+\left[
+\begin{array}{lll|l}
+1 &            0 &           1 & 0\\
+0 &            1 &           0 & 1\\
+0 &            1 &           1 & 0\\
+\end{array}
+\right]
+\]
+\end{minipage}
+
+\begin{minipage}{0.2\linewidth}
+\[
+\left[
+\begin{array}{lll|l}
+1 &            0 &           1 & 0\\
+0 &            \color{red}{1} &           0 & 1\\
+0 &            1 &           1 & 0\\
+\end{array}
+\right]
+\]
+\end{minipage}
+\begin{minipage}{0.4\linewidth}
+$\rightarrow$ XOR row of 2nd  leftmost ``1'' into all rows where `1'' is present in that column
+\end{minipage}
+\begin{minipage}{0.2\linewidth}
+\[
+\left[
+\begin{array}{lll|l}
+1 &            0 &           1 & 0\\
+0 &            1 &           0 & 1\\
+0 &            0 &           1 & 1\\
+\end{array}
+\right]
+\]
+\end{minipage}
+
+What if the matrix doesn't look so pretty?
+
+\begin{itemize}
+\item We can \textbf{swap rows} to make sure the 1st row has a ``1'' in the leftmost column
+\item If a row contains $[000\ldots0|1]$ then the set of linear equations cannot be satisfied, i.e. \textbf{UNSAT}
+\item If the matrix is \textbf{underdetermined}, if there is a solution, it's never a single solution. E.g. 20 variables but only 5 equations.
+\end{itemize}
+
+
+\vfill
+\newpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\SLIDE{Gauss-Jordan Elimination}
+Gauss-Jordan Elimination lets Gaussian Elimination finish, then goes from right to left, bottom to top:
+
+
+\begin{minipage}{0.2\linewidth}
+\[
+\left[
+\begin{array}{lll|l}
+1 &            0 &           1 & 0\\
+0 &            1 &           0 & 1\\
+0 &            0 &           \color{red}{1} & 1\\
+\end{array}
+\right]
+\]
+\end{minipage}
+\begin{minipage}{0.4\linewidth}
+$\rightarrow$ XOR the row of rightmost ``1'' into all rows above where a ``1'' is present
+\end{minipage}
+\begin{minipage}{0.2\linewidth}
+\[
+\left[
+\begin{array}{lll|l}
+1 &            0 &           0 & 1\\
+0 &            1 &           0 & 1\\
+0 &            0 &           1 & 1\\
+\end{array}
+\right]
+\]
+\end{minipage}
+
+This is known as the \textbf{row echelon form}. We can now trivially read out the solution:
+
+$\begin{array}{ll}
+x_1 &= 1\\
+x_2 &= 1\\
+x_3 &= 1\\
+\end{array}$
+
+This indeed satisfies:
+
+$\begin{array}{llllll}
+x_1 &&&\oplus &x_3 &= 0\\
+x_1 &\oplus &x_2 &\oplus &x_3 &= 1\\
+x_1 &\oplus &x_2 &&&= 0\\
+\end{array}$
+
+
+\vfill
+\newpage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \SLIDE{CDCL(T)}
 
@@ -299,159 +463,13 @@ What components do we need?
 \vfill
 \newpage
 
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\SLIDE{CDCL(T) Gauss-Jordan Elimination: Extraction}
-
-\[
-\begin{array}{rcl}
-l_1 \oplus l_2 \oplus l_3 = 1
-& \Leftrightarrow &
-             l_1 \vee           l_2 \vee l_3          \wedge\\
-& &\overline l_1 \vee \overline l_2 \vee l_3          \wedge\\
-& &\overline l_1 \vee           l_2 \vee \overline l_3\wedge\\
-& &          l_1 \vee \overline l_2 \vee \overline l_3\wedge\\
-\\[0.5cm]
-%
-l_1 \oplus l_2 \oplus l_3 = 1
-& \leftarrow &
-             l_1 \vee           l_2 \vee \wedge\\
-& &\overline l_1 \vee \overline l_2 \vee l_3          \wedge\\
-& &\overline l_1 \vee           l_2 \vee \overline l_3\wedge\\
-& &          l_1 \vee \overline l_2 \vee \overline l_3\wedge\\
-\\[0.5cm]
-%
-\end{array}
-\]
-
-\begin{itemize}
-\item Missing literals only mean something stronger than XOR
-\item XOR is still implied and should be detected
-\end{itemize}
-
-\vfill
-\newpage
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\SLIDE{CDCL(T) Gauss-Jordan Elimination: Extraction}
-\vspace{2ex}
-\begin{algorithm}[H]
-	\caption{{\ComputeBloom}}\label{alg:bloom}
-	\begin{algorithmic}[1]
-		\State {\abst} $\gets$ 0
-		\For{var in clause}
-		\State {\abst} $\gets$ {\abst} $\mid$ (1 $<<$ (var $\%$ 32))
-		\EndFor
-		\State \Return {\abst}
-	\end{algorithmic}
-\end{algorithm}
-\vspace{2ex}
-
-\begin{algorithm}
-	\caption{{\Barbet}(clauses, $M$)}\label{alg:barbet}
-	\begin{algorithmic}[1]
-		\State $\xorclauses \gets \emptyset$
-		\For{{\basecl} $\in$ clauses}
-		\If{{\basecl}.size $> M$}
-		\ContinueNoState
-		\EndIf
-
-		\If{{\basecl}.used == 1}
-		\ContinueNoState
-		\EndIf
-
-		\State \Call{find\_one\_xor}{{\basecl}}
-		\EndFor
-		\Return $\xorclauses$
-	\end{algorithmic}
-\end{algorithm}
-
-\vfill
-\newpage
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\SLIDE{CDCL(T) Gauss-Jordan Elimination: Extraction}
-\vspace{2ex}
-% \begin{algorithm}
-% \small
-% \caption{Find XOR using base clause}\label{alg:findonexor}
-\begin{algorithmic}[1]
-\Function{\findonexor}{{\basecl}}
-	\State {\quickcheck} $\gets $ array of zeroes
-	\State found\_comb $\gets$ array of zeroes
-
-%    \State found\_comb $\gets$ clear
-%    \State found\_comb.resize($2^{\textit{{\basecl}.size}}$, 0)
-    \State comb $\gets 0$
-    \State base\_rhs $\gets 1$ \Comment{right-hand-side of the XOR}
-    \For{i $\gets 0 \ldots$ {\basecl} size-1} \label{line:findonexor-base-begin}
-        \State base\_rhs $\gets$ base\_rhs $\oplus$ {\basecl}[i].sign
-        \State comb $\gets$ comb $|$ ({\basecl}[i].sign $<<$ i)
-        \State {\quickcheck}[{\basecl}[i].var] $\gets$ 1
-    \EndFor \label{line:findonexor-base-end}
-    \State {\baseabst} $\gets$ \Call{calc\_abst}{{\basecl}} \label{line:findonexor-compute-bloom}
-    \State found\_comb[comb] $\gets$ 1
-
-   % \State vars $\gets$ 2 lowest occurence variables in {\basecl}
-    \For{v $\in$ \Vars({\basecl})}
-        \For{abst, cl $\in$ occurrence[v]}
-            \If{\Call{{\checkonecl}}{abst, cl, {\basecl}, {\baseabst}}}
-            \Return
-            \EndIf
-        \EndFor
-%        \For{abst, cl $\in$ occurrence[-v]}
-%            \If{\Call{{\checkonecl}}{abst, cl}}
-%                \State \Return
-%            \EndIf
-%        \EndFor
-    \EndFor
-\EndFunction
-\end{algorithmic}
-% \end{algorithm}
-\vfill
-\newpage
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\SLIDE{CDCL(T) Gauss-Jordan Elimination: Matrix Separation}
-\vspace{2ex}
-
-\begin{minipage}{0.7\textwidth}
-% \begin{algorithm}
-% \caption{Find matrixes}
-\begin{algorithmic}[1]
-\Function{findMatrixes}{xors}
-    \State matrixnum $\gets$ 0, var-to-matrix $\gets$ -1, matrix-to-vars $\gets$ empty
-    \For{xor $\in$ xors}
-        \State xor-belongs $\gets$ -1
-        \For{var $\in$ xor}
-            \If{var-to-matrix[var] != -1}
-                \If{xor-belongs == -1} {xor-belongs = var-to-matrix[var]}
-                \ElsIf{xor-belongs != var-to-matrix[var]}
-                    \State Move all variables from var-to-matrix[var] to xor-belongs
-                \EndIf
-            \EndIf
-        \EndFor
-        \If{xor-belongs == -1}
-            \State xor-belongs $\gets$ matrixnum++
-        \EndIf
-        \For{var $\in$ xor}
-            \State var-to-matrix[var] = xor-belongs
-        \EndFor
-    \EndFor \label{line:findonexor-base-end}
-\EndFunction
-\end{algorithmic}
-% \end{algorithm}
-\end{minipage}
-\begin{minipage}{0.3\textwidth}
-\includegraphics[angle=270,width=7cm]{matrix-components}
-\end{minipage}
-\vfill
-\newpage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \SLIDE{CDCL(T) Gauss-Jordan Elimination: None of that row swapping please!}
 \vspace{2ex}
 
 Observations:
 \begin{itemize}
-\item We are using binary matrixes (1/0), so bit-packed format is best
+\item We are using binary matrices (1/0), so bit-packed format is best
 \item Packed format: row-swapping becomes expensive -- it's a copy
 \item Row-echelon form is nice for the eyes [HanJiang2012]:
 \begin{itemize}
@@ -464,15 +482,22 @@ Observations:
 \begin{center}
 \begin{minipage}{0.2\linewidth}
 \[
-\begin{bmatrix}
+\left[
+\begin{array}{llllllll|l}
+x_1 & x_2 & x_2 & x_3 & x_4 & x_5 & x_6 & x_7 & $RHS$\\
 0 & 0 & 0 & 1 & 1 & 1 & 0 & \color{red}1 & 1\\
 1 & \color{red}1 & 0 & 1 & 0 & 1 & 0 & 0 & 1\\
 1 &0 &0 & 0 & 0 & 0 & \color{red}1 & 0 & 0\\
 1 &0 &\color{red}1 & 1 & 0 & 1 & 0 & 0 & 0\\
-\end{bmatrix}
+\end{array}
+\right]
 \]
 \end{minipage}
 \end{center}
+
+The top line reads: $x_3 \oplus x_4 \oplus x_5 \oplus x_7 = 1$
+
+
 
 \vfill
 \newpage
@@ -489,7 +514,7 @@ Let's use a 2-variable watch scheme [HanJiang2012]:
 
 We'll use the Simplex Method's terminology [Danzig'82]:
 \begin{itemize}
-\item Let's call the column that the row is responsible for ``basic''
+\item Let's call the column that the row is responsible for ``{\color{red}basic}''
 \item Let's call the column that the row is NOT responsible for ``nonbasic''
 \end{itemize}
 
@@ -515,12 +540,14 @@ A rough outline:
 
 \begin{minipage}{0.3\linewidth}
 \[
-\begin{bmatrix}
+\left[
+\begin{array}{llllllll|l}
 0 &            0 &           0 & 1 & 1 & 1 &            0 & \color{red}1 & 1\\
 1 & \color{red}1 &           0 & 1 & 0 & 1 &            0 &            0 & 1\\
 1 &            0 &           0 & 0 & 0 & 0 & \color{red}1 &            0 & 0\\
 1 &            0 &\color{red}1 & 1 & 0 & 1 &            0 &            0 & 0\\
-\end{bmatrix}
+\end{array}
+\right]
 \]
 \end{minipage}
 %
@@ -531,12 +558,14 @@ Let's set the first column to ``1'' $\rightarrow$
 %
 \begin{minipage}{0.3\linewidth}
 \[
-\begin{bmatrix}
+\left[
+\begin{array}{llllllll|l}
 \color{darkgreen}0 &            0 &           0 & 1 & 1 & 1 &            0 & \color{red}1 & 1\\
 \color{darkgreen}0 & \color{red}1 &           0 & 1 & 0 & 1 &            0 &            0 & 0\\
 \color{darkgreen}0 &            0 &           0 & 0 & 0 & 0 & \color{red}1 &            0 & 1\\
 \color{darkgreen}0 &            0 &\color{red}1 & 1 & 0 & 1 &            0 &            0 & 1\\
-\end{bmatrix}
+\end{array}
+\right]
 \]
 \end{minipage}
 
@@ -547,12 +576,14 @@ $\rightarrow$
 \end{minipage}
 \begin{minipage}{0.3\linewidth}
 \[
-\begin{bmatrix}
+\left[
+\begin{array}{llllllll|l}
 \color{darkgreen}0 &            0 &           0 & 1 & 1 & 1 &            0 & 1 & 1\\
 \color{darkgreen}0 & 1 &           0 & 1 & 0 & 1 &            0 &            0 & 0\\
 \color{darkgreen}0 &            0 &           0 & 0 & 0 & 0 & \color{red}1 &            0 & 1\\
 \color{darkgreen}0 &            0 &1 & 1 & 0 & 1 &            0 &            0 & 1\\
-\end{bmatrix}
+\end{array}
+\right]
 \]
 \end{minipage}
 \begin{minipage}{0.3\linewidth}
@@ -572,12 +603,14 @@ We got a propagation from last slide:
 \end{minipage}
 \begin{minipage}{0.3\linewidth}
 \[
-\begin{bmatrix}
+\left[
+\begin{array}{llllllll|l}
 \color{darkgreen}0 &            0 &           0 & 1 & 1 & 1 &            0 & 1 & 1\\
 \color{darkgreen}0 & 1 &           0 & 1 & 0 & 1 &            0 &            0 & 0\\
 \color{darkgreen}0 &            0 &           0 & 0 & 0 & 0 & \color{red}1 &            0 & 1\\
 \color{darkgreen}0 &            0 &1 & 1 & 0 & 1 &            0 &            0 & 1\\
-\end{bmatrix}
+\end{array}
+\right]
 \]
 \end{minipage}
 %
@@ -588,12 +621,14 @@ Variable is now set by Gauss-Jordan $\rightarrow$
 %
 \begin{minipage}{0.3\linewidth}
 \[
-\begin{bmatrix}
+\left[
+\begin{array}{llllllll|l}
 \color{darkgreen}0 &            0 &           0 & 1 & 1 & 1 & \color{darkgreen}0 & \color{red}1 & 1\\
 \color{darkgreen}0 & \color{red}1 &           0 & 1 & 0 & 1 & \color{darkgreen}0 & 0 & 0\\
 \color{darkgreen}0 &            0 &           0 & 0 & 0 & 0 & \color{darkgreen}0 & 0 & 0\\
 \color{darkgreen}0 &            0 &\color{red}1 & 1 & 0 & 1 & \color{darkgreen}0 & 0 & 1\\
-\end{bmatrix}
+\end{array}
+\right]
 \]
 \end{minipage}
 
@@ -603,30 +638,34 @@ Variable is decided on $\rightarrow$
 \end{minipage}
 \begin{minipage}{0.3\linewidth}
 \[
-\begin{bmatrix}
+\left[
+\begin{array}{llllllll|l}
 \color{darkgreen}0 & \color{darkgreen}0 &           0 & 1 & 1 & 1 & \color{darkgreen}0 & \color{red}1 & 1\\
 \color{darkgreen}0 & \color{darkgreen}0 &           0 & 1 & 0 & 1 & \color{darkgreen}0 & 0 & 0\\
 \color{darkgreen}0 & \color{darkgreen}0 &           0 & 0 & 0 & 0 & \color{darkgreen}0 & 0 & 0\\
 \color{darkgreen}0 & \color{darkgreen}0 &\color{red}1 & 1 & 0 & 1 & \color{darkgreen}0 & 0 & 1\\
-\end{bmatrix}
+\end{array}
+\right]
 \]
 \end{minipage}
 %
 \begin{minipage}{0.2\linewidth}
 \centering
-Need new responsible variable
+Need new basic variable
 
 $\rightarrow$
 \end{minipage}
 %
 \begin{minipage}{0.3\linewidth}
 \[
-\begin{bmatrix}
+\left[
+\begin{array}{llllllll|l}
 \color{darkgreen}0 & \color{darkgreen}0 &           0 & 1 & 1 & 1 & \color{darkgreen}0 & \color{red}1 & 1\\
 \color{darkgreen}0 & \color{darkgreen}0 &           0 & \color{red}1 & 0 & 1 & \color{darkgreen}0 & 0 & 0\\
 \color{darkgreen}0 & \color{darkgreen}0 &           0 & 0 & 0 & 0 & \color{darkgreen}0 & 0 & 0\\
 \color{darkgreen}0 & \color{darkgreen}0 &\color{red}1 & 1 & 0 & 1 & \color{darkgreen}0 & 0 & 1\\
-\end{bmatrix}
+\end{array}
+\right]
 \]
 \end{minipage}
 
@@ -638,12 +677,14 @@ $\rightarrow$
 \end{minipage}
 \begin{minipage}{0.3\linewidth}
 \[
-\begin{bmatrix}
+\left[
+\begin{array}{llllllll|l}
 \color{darkgreen}0 & \color{darkgreen}0 &           0 &            0 & 1 & 0 & \color{darkgreen}0 & \color{red}1 & 1\\
 \color{darkgreen}0 & \color{darkgreen}0 &           0 & \color{red}1 & 0 & 1 & \color{darkgreen}0 &            0 & 0\\
 \color{darkgreen}0 & \color{darkgreen}0 &           0 &            0 & 0 & 0 & \color{darkgreen}0 &            0 & 0\\
 \color{darkgreen}0 & \color{darkgreen}0 &\color{red}1 &            0 & 0 & 0 & \color{darkgreen}0 &            0 & 1\\
-\end{bmatrix}
+\end{array}
+\right]
 \]
 \end{minipage}
 \begin{minipage}{0.2\linewidth}
@@ -654,12 +695,14 @@ $\rightarrow$
 \end{minipage}
 \begin{minipage}{0.3\linewidth}
 \[
-\begin{bmatrix}
+\left[
+\begin{array}{llllllll|l}
 \color{darkgreen}0 & \color{darkgreen}0 &\color{darkgreen}0 &            0 & 1 & 0 & \color{darkgreen}0 & \color{red}1 & 1\\
 \color{darkgreen}0 & \color{darkgreen}0 &\color{darkgreen}0 & \color{red}1 & 0 & 1 & \color{darkgreen}0 &            0 & 0\\
 \color{darkgreen}0 & \color{darkgreen}0 &\color{darkgreen}0 &            0 & 0 & 0 & \color{darkgreen}0 &            0 & 0\\
 \color{darkgreen}0 & \color{darkgreen}0 &\color{darkgreen}0 &            0 & 0 & 0 & \color{darkgreen}0 &            0 & 0\\
-\end{bmatrix}
+\end{array}
+\right]
 \]
 \end{minipage}
 
@@ -673,7 +716,7 @@ And the story goes on...
 
 What combination of XOR constraints gave us the propagation?
 \begin{itemize}
-\item The above set of matrixes cannot give us the reason clause
+\item The above set of matrices cannot give us the reason clause
 \item Easy solution: the ``green'' columns are actually not zeroed out
 \item When looking for propagations/conflicts, we check if columns' variable is set. If yes, we pretend it's a 0
 \item When looking for reasons, we use the actual values
@@ -686,7 +729,7 @@ Hence:
 \item It is guaranteed to propagate/conflict under current variable assignment
 \end{itemize}
 
-When a variable is set, we are just wearing ``green glasses''
+When a variable is set, we are just wearing \textbf{``green glasses'', a bitmask}
 
 \vfill
 \newpage
